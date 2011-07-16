@@ -48,7 +48,11 @@ def makehorz(resdict):
         fot = open(outname,'w')
         fhead = open(hfile)
         try:
-            fot.write(processhorz(resdict, fhead.read(), footdict))
+            fot.write(processhorz(part = resdict['part'],
+                value = float(resdict['value']),
+                precision = int(resdict['precision']),
+                footprint_name = resdict['footprint'],
+                template = fhead.read()))
         finally:
             fhead.close()
             fot.close()
@@ -65,7 +69,11 @@ def makevert(resdict):
         fot = open(outname,'w')
         fhead = open(hfile)
         try:
-            fot.write(processvert(resdict, fhead.read(), footdict))
+            fot.write(processvert(part = resdict['part'],
+                value = float(resdict['value']),
+                precision = int(resdict['precision']),
+                footprint_name = resdict['footprint'],
+                template = fhead.read()))
         finally:
             fhead.close()
             fot.close()
@@ -73,7 +81,8 @@ def makevert(resdict):
 """ main() """
 def main():
     resdict = processconf(getconf())
-    resdict['name'] = makename(resdict, footdict)
+    resdict['name'] = makename(value = float(resdict['value']),
+        footprint_filename = footdict[resdict['footprint']])
     makehorz(resdict)
     makevert(resdict)
 
