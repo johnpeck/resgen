@@ -67,7 +67,7 @@ def makevert(resdict):
     else:
         print('resgen.makevert: creating ' + outname)
         fot = open(outname,'w')
-        fhead = open(hfile)
+        fhead = open(vfile)
         try:
             fot.write(processvert(part = resdict['part'],
                 value = float(resdict['value']),
