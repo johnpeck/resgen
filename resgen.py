@@ -8,7 +8,7 @@
 hfile = 'resgen_h.tpl' # Horizontal resistor template
 vfile = 'resgen_v.tpl' # Vertical resistor template
 confile = 'resgen.conf' # Specific resistor configuration file
-outpath = '..' # Where the generated symbols will be saved
+outpath = '.' # Where the generated symbols will be saved
 """ Fill in the naming convention for footprints """
 footdict = {'1206_resistor.fp':'1206',
             '0603_resistor.fp':'0603'}
@@ -82,6 +82,7 @@ def makevert(resdict):
 def main():
     resdict = processconf(getconf())
     resdict['name'] = makename(value = float(resdict['value']),
+        precision = resdict['precision'],
         footprint_filename = footdict[resdict['footprint']])
     makehorz(resdict)
     makevert(resdict)

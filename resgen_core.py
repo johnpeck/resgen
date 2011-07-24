@@ -5,6 +5,7 @@
 
 # -------------------------- Pure Python -----------------------------
 import math
+from decimal import *
 
 def processconf(rawfile):
     resdict = {}
@@ -18,86 +19,86 @@ def processconf(rawfile):
         if line.strip().startswith('footprint'):
             resdict['footprint'] = line.split('=')[1].strip()
     return resdict
+    
 
-""" makename(value, footprint_filename)
-    Creates the filename from the value parameter and the footprint name
-    -- Every value will have three significant figures. """
-def makename(value, footprint_filename):
-    value = float(value) # ensure it is a float, not a string
-
-    if (value/1e6 >= 1):
-        Mval = int(math.floor(value/1e6))
-        kval = int(value - Mval*1e6)
-        name = str(Mval) + 'M' + str(kval)
-        while (len(name) > 4):
-            name = name[0:-1] # Reduce to maximum of 3 significant figures
-    elif (value/1e3 >= 1):
-        kval = int(math.floor(value/1e3))
-        rval = int(value - kval*1e3)
-        name = str(kval) + 'k' + str(rval)
-        while (len(name) > 4):
-            name = name[0:-1] # Reduce to maximum of 3 significant figures
+""" makename(value, precision, footprint_filename)
+    Creates the filename from the value, precision, and the footprint 
+    name. """
+def makename(value, precision, footprint_filename):
+    value = Decimal(value) # ensure it is a Decimal, not a string
+    precision = int(precision) # ensure that precision is an integer
+    getcontext().prec = precision # Set the precision for Decimal numbers
+    
+    if (value/Decimal(1e6) >= 1):
+        Mval = Decimal(math.floor(value/Decimal(1e6)))
+        kval = Decimal(math.floor(value - Mval*Decimal(1e6)))/Decimal(1e3)
+        name = str(Mval) + 'M' + '%(number)03u' %{'number':kval}
+    elif (value/Decimal(1e3) >= 1):
+        kval = Decimal(math.floor(value/Decimal(1e3)))
+        rval = Decimal(value - kval*Decimal(1e3))
+        name = str(kval) + 'k' + '%(number)03u' %{'number':rval}
     elif (value >= 1):
-        rval = int(math.floor(value))
-        name = str(rval) + 'r'
-        while (len(name) < 4):
-            name = name + '0'
+        rval = Decimal(math.floor(value))
+        mval = Decimal(math.floor((value - rval)*Decimal(1e3)))
+        name = str(rval) + 'r' + '%(number)03u' %{'number':mval}
     elif (value < 1):
-        mval = int(math.floor(value * 1000))
+        mval = Decimal(math.floor(value * 1000))
         name = str(mval) + 'm'
-        while (len(name) < 4):
-            name = name + '0'
+    """ Format the name for the specified precision """
+    while len(name) < (precision + 1):
+        name += '0' # Pad to specified precision
+    while len(name) > (precision + 1):
+        if name.endswith(('M','k','r')):
+            break
+        else:
+            name = name[0:-1] # Reduce to specified precision
     name = name + '_' + footprint_filename # Tack on the footprint name
     return name
 
+
+""" zeropad(string,width)
+    Adds zeros or removes characters from the right end of a string to
+    make it the specified width. Removes any trailing decimal points."""
+def zeropad(string,width):
+    string = str(string)
+    width = int(width)
+    while len(string) < (width):
+        string += '0' # Pad to specified precision
+    while len(string) > (width):
+        string = string[0:-1] # Reduce to specified precision
+    if string.endswith('.'):
+        string = string[0:-1] # Get rid of the decimal point
+    return string
+
 """ makevalue(value, precision)
     Format the resistor value from the configuration file into the
-    string shown on a schematic for a given precision.
-    --- Three significant digits and the engineering character for the
-        10x multiplier"""
+    string shown on a schematic for a given precision. """
 def makevalue(value, precision):
-    value = float(value) # ensure it is a float, not a string
+    value = Decimal(value) # ensure it is a Decimal, not a string
     precision = int(precision) # ensure it is an int, not a string
-    if (value/1e6 >= 1):
-        Mval = int(math.floor(value/1e6))
-        kval = int(value - Mval*1e6)
-        valstr = str(Mval) + '.' + str(kval)
-        while len(valstr) < (precision + 1):
-            valstr += '0' # Pad to specified precision
-        while len(valstr) > (precision + 1):
-            valstr = valstr[0:-1] # Reduce to specified precision
-        if valstr.endswith('.'):
-            valstr = valstr[0:-1] # Get rid of the decimal point
+    getcontext().prec = precision # Set the precision for Decimal numbers
+    
+    if (value/Decimal(1e6) >= 1):
+        Mval = Decimal(math.floor(value/Decimal(1e6)))
+        kval = Decimal((value - Mval*Decimal(1e6))/Decimal(1e3))
+        valstr = str(Mval) + '.' + '%(number)03u' %{'number':kval}
+        valstr = zeropad(valstr,precision + 1) # Add 1 for decimal point
         valstr += 'M'
-    elif (value/1e3 >= 1):
-        kval = int(math.floor(value/1e3))
-        rval = int(value - kval*1e3)
-        valstr = str(kval) + '.' + str(rval)
-        while len(valstr) < (precision + 1):
-            valstr += '0' # Pad to specified precision
-        while len(valstr) > (precision + 1):
-            valstr = valstr[0:-1] # Reduce to specified precision
-        if valstr.endswith('.'):
-            valstr = valstr[0:-1] # Get rid of the decimal point
+    elif (value/Decimal(1e3) >= 1):
+        kval = Decimal(math.floor(value/Decimal(1e3)))
+        rval = Decimal(value - kval*Decimal(1e3))
+        valstr = str(kval) + '.' + '%(number)03u' %{'number':rval}
+        valstr = zeropad(valstr,precision + 1) # Add 1 for decimal point
         valstr += 'k'
     elif (value >= 1):
-        rval = int(math.floor(value))
-        valstr = str(rval)
-        if len(valstr) < (precision + 1):
-            valstr += '.'
-        while len(valstr) < (precision + 1):
-            valstr += '0' # Pad to specified precision
-        while len(valstr) > (precision + 1):
-            valstr = valstr[0:-1] # Reduce to specified precision
-        if valstr.endswith('.'):
-            valstr = valstr[0:-1] # Get rid of the decimal point
+        rval = Decimal(math.floor(value))
+        mval = Decimal(math.floor((value - rval)*Decimal(1e3)))
+        valstr = str(rval) + '.' + '%(number)03u' %{'number':mval}
+        valstr = zeropad(valstr,precision + 1) # Add 1 for decimal point
     elif (value < 1):
-        mval = int(math.floor(value * 1000))
-        valstr = '0.' + str(mval)
-        while len(valstr) < (precision + 2):
-            valstr += '0' # Pad to specified precision
-        while len(valstr) > (precision + 2):
-            valstr = valstr[0:-1] # Reduce to specified precision
+        mval = Decimal(math.floor(value * 1000))
+        valstr = '0.' + '%(number)03u' %{'number':mval}
+        valstr = zeropad(valstr,precision + 2) # Add 2 for point and zero
     return valstr
 
 def processhorz(part, value, precision, footprint_name, template):
