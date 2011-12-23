@@ -11,7 +11,9 @@ confile = 'resgen.conf' # Specific resistor configuration file
 outpath = '.' # Where the generated symbols will be saved
 """ Fill in the naming convention for footprints """
 footdict = {'1206_resistor.fp':'1206',
-            '0603_resistor.fp':'0603'}
+            '0603_resistor.fp':'0603',
+            '250mw_resistor.fp':'250mw'
+            }
 
 
 # -------------------------- End configuration -----------------------
