@@ -1,0 +1,11 @@
+# HTML output from resgen_web
+output/
+
+# Don't worry about any generated .sym files
+*.sym
+
+# Don't worry about pjamas stuff
+pyjamas-0.8alpha1/
+
+# Don't worry about compiled python code
+*.pyc
